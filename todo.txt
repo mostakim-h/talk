@@ -1,0 +1,19 @@
+/* TODO: Boilerplate:
+  * setup docker ✅
+  * setup redis ✅
+  * setup mongodb ✅
+  * setup server ✅
+  * built login page ✅
+  * built registration page ✅
+  * built reset password page ✅
+  * built email verification page ✅
+  * formate all responses with a consistent structure ✅
+  * persist redux store ✅
+  * tanstack query for data fetching ✅
+  * 404 page ✅
+  * implement user last login time
+  * implement user last active time
+  * build no internet page ✅
+  * password strength validation
+  * password reset from login page ✅
+ */
