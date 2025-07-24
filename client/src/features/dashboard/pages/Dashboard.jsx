@@ -1,9 +1,6 @@
-import {
-  useLogOut,
-  useSendEmailToResetPassword,
-  useSendEmailToVerifyUserEmail
-} from "../../auth/hooks/authHooks.js";
+import {useLogOut, useSendEmailToResetPassword, useSendEmailToVerifyUserEmail} from "../../auth/hooks/authHooks.js";
 import {useSelector} from "react-redux";
+import Chat from "../components/singleChat/Chat.jsx";
 
 export default function Dashboard() {
   const user = useSelector((state) => state.auth.user);
@@ -21,35 +18,19 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to the dashboard!</p>
-
-      <button
-        onClick={logOut}
-        disabled={progressLogOut}
-      >
-        Log out
-      </button>
 
       <div>
-        <h2>User Information</h2>
-        {user ? (
-          <div>
-            <p><strong>Name:</strong> {user.firstName} {user.lastName}</p>
-            <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Varification status:</strong> {user.isVerified ? "Varified" : <>Not Varified <button disabled={progressEmail}
-              onClick={handleSendVerificationEmail}>Click to verify</button></>}</p>
-            <p><strong>Created At:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-            <p><strong>Updated At:</strong> {new Date(user.updatedAt).toLocaleDateString()}</p>
-            <p><strong>Reset your password:</strong>
-              <button disabled={progressPass} onClick={handleResetPassword}>Reset password</button>
-            </p>
-          </div>
-        ) : (
-          <p>Loading user information...</p>
-        )}
-
+        <h1>Dashboard</h1>
+        <p>Welcome, {user.fullName}!</p>
+        <p>Email: {user.email}</p>
+        <p>Id: {user._id}</p>
+        <button onClick={logOut} disabled={progressLogOut}>Log Out</button>
+        <button onClick={handleSendVerificationEmail} disabled={progressEmail}>Send Verification Email</button>
+        <button onClick={handleResetPassword} disabled={progressPass}>Reset Password</button>
       </div>
+
+
+      <Chat/>
 
     </div>
   )

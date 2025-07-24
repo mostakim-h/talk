@@ -1,4 +1,3 @@
-import './App.css'
 import {Navigate, Route, Routes} from "react-router-dom";
 import PrivateRoute from "./router/PrivateRoute.jsx";
 import {Suspense} from "react";
@@ -6,6 +5,7 @@ import PublicLayout from "./layouts/PublicLayout.jsx";
 import PrivateLayout from "./layouts/PrivateLayout.jsx";
 import {rootRoutes} from "./router/rootRoutes.js";
 import BlankLayout from "./layouts/BlankLayout.jsx";
+import {useInitSocket} from "./hooks/useInitSocket.jsx";
 
 function renderComponent(Component, Layout) {
   return Layout ? (
@@ -18,6 +18,7 @@ function renderComponent(Component, Layout) {
 }
 
 function App() {
+  useInitSocket()
 
   return (
     <Routes>

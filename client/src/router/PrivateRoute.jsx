@@ -2,7 +2,7 @@ import {Navigate} from 'react-router-dom';
 import {useEffect} from "react";
 import {setLoading, setUser} from "../redux/slices/authSlice.js";
 import {useDispatch, useSelector} from "react-redux";
-import {getUser} from "../api/authApis.js";
+import {getUser} from "../api/userApis.js";
 
 export default function PrivateRoute({children}) {
   const {user, accessToken, loading} = useSelector((state) => state.auth);
