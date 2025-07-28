@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {refreshToken} from "./authApis.js";
 import {store} from "../redux/store.js";
+import {clearAuth} from "../redux/slices/authSlice.js";
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:5000/api',
@@ -60,6 +61,14 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (error) {
         processQueue(error, null);
+
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          console.log('Unauthorized or Forbidden, redirecting to login');
+          localStorage.removeItem('accessToken');
+          store.dispatch(clearAuth());
+          window.location.href = '/login';
+        }
+
         return Promise.reject(error);
       } finally {
         isRefreshing = false;
