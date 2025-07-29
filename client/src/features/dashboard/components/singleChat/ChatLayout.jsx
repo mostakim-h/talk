@@ -33,7 +33,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}) => {
           receiverId: null,
           isTyping: false,
         });
-      }, 1000);
+      }, 2000);
     })
 
     return () => {

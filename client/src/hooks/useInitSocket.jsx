@@ -3,16 +3,16 @@ import {useEffect} from "react";
 import socket from "../config/socket.js";
 
 export const useInitSocket = () => {
-  const {user: {_id: userId}} = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (userId) {
+    if (user?._id) {
       socket.connect()
-      socket.emit('join', userId);
+      socket.emit('join', user?._id);
     }
 
     return () => {
       socket.disconnect();
     };
-  }, [userId]);
+  }, [user?._id]);
 }

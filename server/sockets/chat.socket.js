@@ -6,6 +6,12 @@ module.exports = function(io) {
     // join event to register user and broadcasting to others
     socket.on("join", (userId) => {
       users[socket.id] = userId;
+
+      // Send all currently online users to the new user
+      const onlineUsers = Object.values(users);
+      io.emit("online-users", onlineUsers); // ✅ Send full list to everyone
+
+      // Broadcast to others that this user is now online
       socket.broadcast.emit("user-online", userId);
     });
 
@@ -30,12 +36,23 @@ module.exports = function(io) {
         senderId: users[socket.id],
         receiverId
       });
+
+      for (const [socketId, userId] of Object.entries(users)) {
+        if (userId === receiverId) {
+          io.to(socketId).emit("users-typing", {
+            senderId: users[socket.id],
+          });
+        }
+      }
     });
 
     socket.on("disconnect", () => {
       const userId = users[socket.id];
       delete users[socket.id];
       socket.broadcast.emit("user-offline", userId);
+      // Update online users list
+      const onlineUsers = Object.values(users);
+      io.emit("online-users", onlineUsers);
     });
   });
 }
