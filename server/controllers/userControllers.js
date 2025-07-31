@@ -1,4 +1,4 @@
-const UserModel = require('../models/UserModel');
+const {UserModel} = require('../models/index');
 const sendRes = require("../utils/sendRes");
 
 exports.getAllUsers = async function (req, res) {

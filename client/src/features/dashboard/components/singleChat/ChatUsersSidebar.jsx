@@ -4,12 +4,13 @@ import {useEffect, useState} from "react";
 import socket from "../../../../config/socket.js";
 
 export default function ChatUsersSidebar({handleSelectUser}) {
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const [usersTyping, setUsersTyping] = useState([]);
   const {data: users} = useQuery({
     queryKey: ['chatUsers'],
-    queryFn: getAllUsers,
+    queryFn: () => getAllUsers(),
   })
+
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [usersTyping, setUsersTyping] = useState([]);
 
   useEffect(() => {
     socket.on("online-users", (onlineUsers) => {
@@ -64,8 +65,8 @@ export default function ChatUsersSidebar({handleSelectUser}) {
             >
               <span>{user.fullName}</span>
               <span style={{color: '#888'}}>{user.email}</span>
-              <span style={{color: onlineUsers.includes(user._id) ? 'green' : 'red'}}>
-                {onlineUsers.includes(user._id) ? 'Online' : 'Offline'}
+              <span style={{color: (onlineUsers.includes(user._id) || user.isOnline) ? 'green' : 'red'}}>
+                {(onlineUsers.includes(user._id) || user.isOnline) ? 'Online' : 'Offline'}
               </span>
               {isUserTyping(user._id) && <span>typing...</span>}
             </div>

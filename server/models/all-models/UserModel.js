@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
   isVerified: {
     type: Boolean,
     default: false

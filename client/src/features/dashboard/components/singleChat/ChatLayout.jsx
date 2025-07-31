@@ -1,7 +1,15 @@
 import {useEffect, useState} from "react";
 import socket from "../../../../config/socket.js";
+import {useQuery} from "@tanstack/react-query";
+import {getChats} from "../../../../api/chatApis.js";
 
 const ChatLayout = ({selectedChatUser, currentRoomId, userId}) => {
+  const {data} = useQuery({
+    queryKey: ['chatMessages', currentRoomId],
+    queryFn: ({signal}) => getChats(currentRoomId, signal),
+    enabled: !!currentRoomId,
+  })
+
   const [isTyping, setIsTyping] = useState({
     senderId: null,
     isTyping: false,
@@ -9,6 +17,14 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}) => {
 
   const [msg, setMsg] = useState("");
   const [messages, setMessages] = useState([]);
+
+  const handleInitMsg = (msgs) => {
+    if (msgs && msgs.length > 0) {
+      setMessages(msgs);
+    } else {
+      setMessages([]);
+    }
+  }
 
   const sendMessage = () => {
     socket.emit("send-message", {roomId: currentRoomId, message: msg});
@@ -42,6 +58,12 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (data) {
+      handleInitMsg(data);
+    }
+  }, [data]);
+
   return (
     <div>
       <h2>Chat with {selectedChatUser?.fullName || "Select a user"}</h2>
@@ -72,13 +94,13 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}) => {
               <>
                 <strong>You:</strong>
                 {" "}
-                {m.message}
+                {m.content.message}
               </>
             ) : (
               <>
                 <strong>{selectedChatUser?.fullName}:</strong>
                 {" "}
-                {m.message}
+                {m.content.message}
               </>
             )}
           </p>

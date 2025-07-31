@@ -1,3 +1,5 @@
+const {UserModel, ChatModel} = require('../models/index');
+
 const users = {};
 
 module.exports = function(io) {
@@ -13,6 +15,10 @@ module.exports = function(io) {
 
       // Broadcast to others that this user is now online
       socket.broadcast.emit("user-online", userId);
+
+      UserModel.findByIdAndUpdate(userId, { isOnline: true }, { new: true }).then(user => {
+        console.log("User is online:", user);
+      })
     });
 
     // join_room event to allow users to join a specific chat room
@@ -25,8 +31,36 @@ module.exports = function(io) {
       io.to(roomId).emit("receive-message", {
         senderId: users[socket.id],
         roomId: roomId,
-        message
+        content: {
+          message: message,
+          media: {
+            fileExtension: null,
+            file: null
+          }
+        },
+        reactions: []
       });
+
+      const senderId = users[socket.id];
+
+      console.log('senderId:', senderId);
+
+      ChatModel.create({
+        roomId: roomId,
+        senderId: users[socket.id],
+        content: {
+          message: message,
+          media: {
+            fileExtension: null,
+            file: null
+          }
+        },
+        reactions: []
+      }).then(() => {
+        console.log("Message saved to database");
+      }).catch((err) => {
+        console.error("Error saving message:", err);
+      })
     })
 
 
@@ -50,6 +84,9 @@ module.exports = function(io) {
       const userId = users[socket.id];
       delete users[socket.id];
       socket.broadcast.emit("user-offline", userId);
+      UserModel.findByIdAndUpdate(userId, { isOnline: false }, { new: true }).then((user) => {
+        console.log("User is offline:", user);
+      })
       // Update online users list
       const onlineUsers = Object.values(users);
       io.emit("online-users", onlineUsers);

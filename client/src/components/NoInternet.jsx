@@ -33,7 +33,7 @@ export default function NoInternet() {
   if (isOnline) return null;
 
   return (
-    <div className="">
+    <div>
       <p>No Internet Connection</p>
     </div>
   );

@@ -16,4 +16,10 @@
   * build no internet page ✅
   * password strength validation
   * password reset from login page ✅
+  * single chat system ✅
+  * real-time active status ✅
+  * real-time typing status ✅
+  * save chats to mongo db
+  * save active status to mongo db
+  * mongodb indexing for faster queries
  */

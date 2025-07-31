@@ -1,4 +1,4 @@
-import NoInternet from "../features/auth/components/NoInternet.jsx";
+import NoInternet from "../components/NoInternet.jsx";
 
 export default function BlankLayout ({children}) {
   return (
