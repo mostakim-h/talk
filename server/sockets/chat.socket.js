@@ -38,12 +38,9 @@ module.exports = function(io) {
             file: null
           }
         },
-        reactions: []
+        reactions: [],
+        createdAt: new Date(),
       });
-
-      const senderId = users[socket.id];
-
-      console.log('senderId:', senderId);
 
       ChatModel.create({
         roomId: roomId,
