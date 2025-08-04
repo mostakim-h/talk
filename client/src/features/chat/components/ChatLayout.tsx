@@ -4,7 +4,7 @@ import socket from "@/config/socket.ts";
 import {getChats} from "@/apis/chatApis.ts";
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
-import {Paperclip, PhoneCall, Search, Send, Smile, VideoIcon} from "lucide-react";
+import {Paperclip, Phone, Search, Send, Smile, VideoIcon} from "lucide-react";
 import {Separator} from "@/components/ui/separator.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
@@ -86,12 +86,13 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   }, [messages])
 
   return (
-    <Card className="flex-1 flex flex-col h-full pt-2">
-      <CardHeader className={'px-2'}>
+    <Card className="flex-1 flex flex-col h-full pt-2 gap-0">
+      <CardHeader className="px-2 py-0">
         <div className="bg-muted/90 flex items-center justify-between gap-4 px-4 py-2 rounded-lg">
-          <div className={'flex items-center gap-4'}>
+          {/* Avatar and User Info */}
+          <div className="flex items-center gap-4">
             <Avatar className="w-12 h-12">
-              <AvatarImage src={"https://avatars.githubusercontent.com/u/124599?v=4"}/>
+              <AvatarImage src={selectedChatUser?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
               <AvatarFallback>
                 {selectedChatUser?.fullName
                   .split(" ")
@@ -100,66 +101,86 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className={'m-0 font-medium'}>{selectedChatUser?.fullName || "Select a user"}</h2>
-              <p className={`text-xs ${selectedChatUser?.isOnline ? "text-green-500" : "text-muted-foreground"}`}>
-                {selectedChatUser?.isOnline ? "Online" : selectedChatUser && shortLastSeen(selectedChatUser?.updatedAt)}
+              <h2 className="m-0 font-medium">
+                {selectedChatUser?.fullName || "Select a user"}
+              </h2>
+              <p
+                className={`text-xs ${
+                  selectedChatUser?.isOnline
+                    ? "text-green-500"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {selectedChatUser?.isOnline
+                  ? "Online"
+                  : selectedChatUser && shortLastSeen(selectedChatUser?.updatedAt)}
               </p>
             </div>
           </div>
-          <div className={'flex items-center gap-2'}>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
-              <VideoIcon className="w-4 h-4"/>
-            </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
-              <PhoneCall className="w-4 h-4"/>
-            </Button>
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
-              <Search className="w-4 h-4"/>
-            </Button>
+
+          {/* Buttons */}
+
+          <div
+            className="flex gap-5 items-center">
+            <div
+              className="bg-white/80 dark:bg-muted/50 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
+              <VideoIcon className=" w-5 h-5 text-muted-foreground hover:text-foreground transition-colors"/>
+              <Phone className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
+            </div>
+
+            <Search className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
           </div>
+
         </div>
       </CardHeader>
+
 
       <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Chat Messages */}
         <ScrollArea className="flex-1 overflow-y-auto pr-4">
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div key={message._id} className={`flex gap-3 ${message.senderId === userId ? "justify-end" : ""}`}>
-                {message.senderId !== userId && (
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={'https://avatars.githubusercontent.com/u/124599?v=4'}/>
-                    <AvatarFallback>
-                      {selectedChatUser?.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div className={`max-w-md ${message.senderId === userId ? "order-first" : ""}`}>
+            {messages && messages.length !== 0 ? (
+              messages.map((message) => (
+                <div key={message._id} className={`flex gap-3 ${message.senderId === userId ? "justify-end" : ""}`}>
                   {message.senderId !== userId && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs text-muted-foreground">{shortLastSeen(message.createdAt)}</span>
-                    </div>
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={'https://avatars.githubusercontent.com/u/124599?v=4'}/>
+                      <AvatarFallback>
+                        {selectedChatUser?.fullName
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
                   )}
-                  <div
-                    className={`p-3 rounded-2xl ${
-                      message.senderId === userId
-                        ? "bg-primary text-primary-foreground rounded-br-md"
-                        : "bg-muted rounded-bl-md"
-                    }`}
-                  >
-                    <p className="text-sm">{message.content.message}</p>
+                  <div className={`max-w-md ${message.senderId === userId ? "order-first" : ""}`}>
+                    {message.senderId !== userId && (
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-muted-foreground">{shortLastSeen(message.createdAt)}</span>
+                      </div>
+                    )}
+                    <div
+                      className={`p-3 rounded-2xl ${
+                        message.senderId === userId
+                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          : "bg-muted rounded-bl-md"
+                      }`}
+                    >
+                      <p className="text-sm">{message.content.message}</p>
+                    </div>
+                    {message.senderId === userId && (
+                      <div className="text-right mt-1">
+                        <span className="text-xs text-muted-foreground">{shortLastSeen(message.createdAt)}</span>
+                      </div>
+                    )}
                   </div>
-                  {message.senderId === userId && (
-                    <div className="text-right mt-1">
-                      <span className="text-xs text-muted-foreground">{shortLastSeen(message.createdAt)}</span>
-                    </div>
-                  )}
                 </div>
+              ))
+            ) : (
+              <div className="flex items-center justify-center h-full text-muted-foreground">
+                <p className="text-sm">No messages yet. Start the conversation!</p>
               </div>
-            ))}
+            )}
 
             {/* Typing Indicator */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground italic">

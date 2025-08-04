@@ -1,58 +1,26 @@
-import {useEffect, useState} from "react"
+import {useState} from "react"
 import {MoreHorizontal,} from "lucide-react"
 import {Button} from "@/components/ui/button.tsx"
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx"
 import ChatUsersSidebar from "@/features/chat/components/ChatUserSidebar.tsx";
-import {useSelector} from "react-redux";
 import {getChatRoomId} from "@/lib/utils.ts";
 import socket from "@/config/socket.ts";
 import ChatLayout from "@/features/chat/components/ChatLayout.tsx";
 import ChatUserDetails from "@/features/chat/components/ChatUserDetails.tsx";
+import type {IUser} from "@/types/IUser.ts";
+import {useAppSelector} from "@/redux/hooks.ts";
 
 export default function ChatDashboard() {
-  const {user: {_id: userId}} = useSelector((state: any) => state.auth);
-  const [selectedChatUser, setSelectedChatUser] = useState(null);
+  const {_id: userId} = useAppSelector((state) => state.auth.user);
+  const [selectedChatUser, setSelectedChatUser] = useState<IUser>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
 
-  const handleSelectUser = (selectedUser: any) => {
+  const handleSelectUser = (selectedUser: IUser) => {
     setSelectedChatUser(selectedUser);
     const roomId = getChatRoomId(userId, selectedUser?._id);
     setCurrentRoomId(roomId);
     socket.emit('join_room', roomId);
   };
-
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const [usersTyping, setUsersTyping] = useState([]);
-
-  useEffect(() => {
-    socket.on("online-users", (onlineUsers: []) => {
-      console.log("Online users:", onlineUsers);
-      setOnlineUsers(onlineUsers);
-    });
-
-   /*socket.on("user-online", (userId: any) => {
-      console.log("User just came online:", userId);
-    });*/
-
-    socket.on("users-typing", (data: any) => {
-      const {senderId} = data;
-      setUsersTyping((prev: any) => {
-        if (!prev.includes(senderId)) {
-          return [...prev, senderId];
-        }
-        return prev;
-      });
-      setTimeout(() => {
-        setUsersTyping((prev) => prev.filter(id => id !== senderId));
-      }, 2000);
-    })
-
-    return () => {
-      socket.off("online-users");
-      socket.off("user-online");
-      socket.off("user-typing");
-    };
-  }, []);
 
   return (
     <div className="flex h-screen bg-muted p-4 gap-4">
@@ -61,8 +29,6 @@ export default function ChatDashboard() {
       <ChatUsersSidebar
         handleSelectUser={handleSelectUser}
         selectedChatUser={selectedChatUser}
-        onlineUsers={onlineUsers}
-        usersTyping={usersTyping}
         userId={userId}
       />
 

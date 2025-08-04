@@ -1,32 +1,32 @@
 import {useQuery} from "@tanstack/react-query";
 import {getAllUsers} from "@/apis/userApis.ts";
 import {Button} from "@/components/ui/button.tsx";
-import {LogOut, MoreHorizontal, Plus, Search, Settings} from "lucide-react";
+import {MoreHorizontal, Plus, Search, Settings} from "lucide-react";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import {shortLastSeen} from "@/lib/utils.ts";
 import {ModeToggle} from "@/components/ModeToggle";
-import {useLogOut} from "@/features/auth/hooks/authHooks.ts";
 import {Input} from "@/components/ui/input.tsx";
 import type {IUser} from "@/types/IUser.ts";
+import {useEffect, useState} from "react";
+import socket from "@/config/socket.ts";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.tsx";
+import EditProfile from "@/features/chat/components/EditProfile.tsx";
 
 export default function ChatUsersSidebar(
   {
     handleSelectUser,
     selectedChatUser,
-    onlineUsers = [],
-    usersTyping = [],
     userId = "",
   }: {
     handleSelectUser: (user: IUser) => void,
     selectedChatUser: IUser,
-    onlineUsers?: string[],
-    usersTyping?: string[]
     userId?: string,
   }) {
 
-  const {mutateAsync: logOut, isPending} = useLogOut()
+  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [usersTyping, setUsersTyping] = useState<string[]>([]);
 
   const {data: users} = useQuery({
     queryKey: ['chatUsers'],
@@ -34,6 +34,36 @@ export default function ChatUsersSidebar(
   })
 
   const isUserTyping = (userId: string) => usersTyping.includes(userId);
+
+  useEffect(() => {
+    socket.on("online-users", (onlineUsers: []) => {
+      console.log("Online users:", onlineUsers);
+      setOnlineUsers(onlineUsers);
+    });
+
+    /*socket.on("user-online", (userId: any) => {
+       console.log("User just came online:", userId);
+     });*/
+
+    socket.on("users-typing", (data: { senderId: string }) => {
+      const {senderId} = data;
+      setUsersTyping((prev: string[]): string[] => {
+        if (!prev.includes(senderId)) {
+          return [...prev, senderId];
+        }
+        return prev;
+      });
+      setTimeout(() => {
+        setUsersTyping((prev) => prev.filter(id => id !== senderId));
+      }, 2000);
+    })
+
+    return () => {
+      socket.off("online-users");
+      socket.off("user-online");
+      socket.off("user-typing");
+    };
+  }, []);
 
   return (
     <Card className="w-80 flex flex-col">
@@ -45,15 +75,14 @@ export default function ChatUsersSidebar(
           </div>
           <div className="flex gap-3">
             <ModeToggle/>
-            <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg">
-              <Settings className="w-4 h-4"/>
-            </Button>
-            <Button
-              disabled={isPending}
-              onClick={() => logOut()}
-              variant="ghost" size="icon" className="w-8 h-8 rounded-lg">
-              <LogOut className="w-4 h-4"/>
-            </Button>
+            <Popover>
+              <PopoverTrigger>
+                <Settings className="w-4 h-4"/>
+              </PopoverTrigger>
+              <PopoverContent align={'start'}>
+                <EditProfile/>
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         {/* Search */}
@@ -101,9 +130,9 @@ export default function ChatUsersSidebar(
                     <AvatarImage src={user?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {user?.fullName
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")}
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
                     </AvatarFallback>
                   </Avatar>
                   {(onlineUsers.includes(user?._id) || user?.isOnline) && (
