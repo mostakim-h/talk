@@ -40,6 +40,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  about: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   isOnline: {
     type: Boolean,
     default: false

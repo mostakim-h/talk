@@ -11,7 +11,11 @@ import type {IUser} from "@/types/IUser.ts";
 import {useAppSelector} from "@/redux/hooks.ts";
 
 export default function ChatDashboard() {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const {_id: userId} = useAppSelector((state) => state.auth.user);
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
   const [selectedChatUser, setSelectedChatUser] = useState<IUser>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
 

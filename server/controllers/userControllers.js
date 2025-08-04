@@ -15,3 +15,31 @@ exports.getAllUsers = async function (req, res) {
     return sendRes(res, 500, "Server error while retrieving users", {});
   }
 }
+
+exports.editUser = async function (req, res) {
+  const { userId } = req.params;
+  const body = req.body;
+
+  if (!body) {
+    return sendRes(res, 400, "No fields to update!", {});
+  }
+
+  try {
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      body,
+      { new: true, runValidators: true }
+    )
+
+    if (!user) {
+      return sendRes(res, 404, "User not found", {});
+    }
+
+    delete user.password
+
+    return sendRes(res, 200, "User updated successfully", {user});
+  } catch (error) {
+    console.error('Edit user error:', error);
+    return sendRes(res, 500, "Server error while updating user", {});
+  }
+}
