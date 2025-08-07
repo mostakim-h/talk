@@ -7,6 +7,7 @@ import {useLogOut} from "@/features/auth/hooks/authHooks.ts";
 import {useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {useUpdateUserProfile} from "@/features/chat/hooks/userHooks.ts";
+import {Label} from "@/components/ui/label.tsx";
 
 export default function EditProfile() {
   const user = useAppSelector((state) => state.auth.user);
@@ -34,15 +35,48 @@ export default function EditProfile() {
 
   return (
     <div>
-      <Avatar className="w-15 h-15">
-        <AvatarImage src={user?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
-        <AvatarFallback className="bg-primary/10 text-primary">
-          {user?.fullName
-            .split(" ")
-            .map((n: string) => n[0])
-            .join("")}
-        </AvatarFallback>
-      </Avatar>
+      <div className="relative group w-[60px] h-[60px]">
+        <Avatar className="w-full h-full">
+          <AvatarImage src={user?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"} />
+          <AvatarFallback className="bg-primary/10 text-primary">
+            {user?.fullName
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")}
+          </AvatarFallback>
+        </Avatar>
+
+        {/* Overlay with Edit icon */}
+        <div
+          className="absolute inset-0 w-full h-full rounded-full bg-opacity-0 flex items-center justify-center transition-all duration-200"
+        >
+          <Label
+            className="cursor-pointer opacity-0 group-hover:opacity-100 bg-muted/50 p-2 rounded-2xl transition-opacity duration-200"
+            htmlFor="avatar-upload"
+          >
+            <Edit3 size={16} />
+          </Label>
+          <Input
+            id="avatar-upload"
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const selectedFile = e.target.files?.[0];
+              if (selectedFile) {
+                try {
+                  const formData = new FormData();
+                  formData.append('file', selectedFile);
+                  await update({ userId: user?._id, bodyData: formData });
+                } catch (error) {
+                  console.error("Error updating avatar:", error);
+                }
+              }
+            }}
+            className="hidden"
+          />
+        </div>
+      </div>
+
 
       <div className={'pt-2 space-y-2'}>
         <div className={'flex items-center justify-between mb-2'}>
@@ -114,7 +148,7 @@ export default function EditProfile() {
           onClick={() => logOut()}
           variant="ghost" className="h-8">
           <div className={'flex items-center gap-2'}>
-            <LogOut />
+            <LogOut/>
             <span>Log out</span>
           </div>
         </Button>

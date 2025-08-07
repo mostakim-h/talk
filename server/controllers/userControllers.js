@@ -1,5 +1,6 @@
 const {UserModel} = require('../models/index');
 const sendRes = require("../utils/sendRes");
+const {uploader} = require("../config/cloudinary");
 
 exports.getAllUsers = async function (req, res) {
   try {
@@ -19,6 +20,22 @@ exports.getAllUsers = async function (req, res) {
 exports.editUser = async function (req, res) {
   const { userId } = req.params;
   const body = req.body;
+
+  if (req.file) {
+    const url = await uploader.upload(req.file.path, {
+      folder: 'users',
+      public_id: userId,
+      overwrite: true
+    }).catch((error) => {
+      return sendRes(res, 500, "Error uploading image to Cloudinary", {error});
+    });
+
+    if (!url) {
+      return sendRes(res, 500, "Error uploading image to Cloudinary", {});
+    }
+
+    body.avatar = url.secure_url;
+  }
 
   if (!body) {
     return sendRes(res, 400, "No fields to update!", {});

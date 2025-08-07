@@ -123,7 +123,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
           <div
             className="flex gap-5 items-center">
             <div
-              className="bg-white/80 dark:bg-muted/50 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
+              className="bg-white/80 dark:bg-teal-950 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
               <VideoIcon className=" w-5 h-5 text-muted-foreground hover:text-foreground transition-colors"/>
               <Phone className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
             </div>
