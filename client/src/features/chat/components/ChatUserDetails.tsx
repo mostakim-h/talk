@@ -6,6 +6,7 @@ import {ScrollArea} from "@/components/ui/scroll-area";
 import {ChevronRight, File, FileText, ImageIcon, type LucideProps, MoreHorizontal, Video} from "lucide-react";
 import type {ForwardRefExoticComponent, RefAttributes} from "react";
 import type {IUser} from "@/types/IUser.ts";
+import {cropImage} from "@/lib/utils.ts";
 
 interface FileType {
   type: string
@@ -51,7 +52,7 @@ export default function ChatUserDetails({user}: { user: IUser }) {
     <Card className="w-80 flex flex-col h-full">
       <CardHeader className="text-center pb-4">
         <Avatar className="w-16 h-16 mx-auto mb-3">
-          <AvatarImage src={user.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+          <AvatarImage src={cropImage(user.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
           <AvatarFallback className="bg-primary/10 text-primary text-lg">RE</AvatarFallback>
         </Avatar>
         <h3 className="font-semibold mb-1">{user.fullName}</h3>

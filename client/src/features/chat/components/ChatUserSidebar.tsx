@@ -5,7 +5,7 @@ import {MoreHorizontal, Plus, Search, Settings} from "lucide-react";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
-import {shortLastSeen} from "@/lib/utils.ts";
+import {cropImage, shortLastSeen} from "@/lib/utils.ts";
 import {ModeToggle} from "@/components/ModeToggle";
 import {Input} from "@/components/ui/input.tsx";
 import type {IUser} from "@/types/IUser.ts";
@@ -127,7 +127,7 @@ export default function ChatUsersSidebar(
               >
                 <div className={'relative'}>
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={user?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+                    <AvatarImage src={cropImage(user?.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
                     <AvatarFallback className="bg-primary/10 text-primary">
                       {user?.fullName
                         .split(" ")

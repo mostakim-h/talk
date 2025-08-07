@@ -9,7 +9,7 @@ import {Separator} from "@/components/ui/separator.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {Textarea} from "@/components/ui/textarea.tsx";
-import {shortLastSeen} from "@/lib/utils.ts";
+import {cropImage, shortLastSeen} from "@/lib/utils.ts";
 import type {IUser} from "@/types/IUser.ts";
 import type {IMessage} from "@/types/message.ts";
 
@@ -92,7 +92,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
           {/* Avatar and User Info */}
           <div className="flex items-center gap-4">
             <Avatar className="w-12 h-12">
-              <AvatarImage src={selectedChatUser?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+              <AvatarImage src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
               <AvatarFallback>
                 {selectedChatUser?.fullName
                   .split(" ")

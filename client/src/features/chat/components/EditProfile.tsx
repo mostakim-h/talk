@@ -1,19 +1,26 @@
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import {useAppSelector} from "@/redux/hooks.ts";
-import {Edit3, LogOut} from "lucide-react";
+import {BadgeCheck, Edit3, LogOut} from "lucide-react";
 import {Separator} from "@/components/ui/separator.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {useLogOut} from "@/features/auth/hooks/authHooks.ts";
+import {
+  useLogOut,
+  useSendEmailToResetPassword,
+  useSendEmailToVerifyUserEmail
+} from "@/features/auth/hooks/authHooks.ts";
 import {useState} from "react";
 import {Input} from "@/components/ui/input.tsx";
 import {useUpdateUserProfile} from "@/features/chat/hooks/userHooks.ts";
 import {Label} from "@/components/ui/label.tsx";
+import {cropImage} from "@/lib/utils.ts";
 
 export default function EditProfile() {
   const user = useAppSelector((state) => state.auth.user);
   const {mutateAsync: logOut, isPending} = useLogOut()
   const {mutateAsync: update} = useUpdateUserProfile()
   const [editMode, setEditMode] = useState<string>('');
+  const {mutateAsync: sendEmailToVerifyUserEmail, isPending: progressEmail} = useSendEmailToVerifyUserEmail()
+  const {mutateAsync: sendEmailToResetPassword, isPending: progressPass} = useSendEmailToResetPassword()
 
   const handleEdit = (field: string) => {
     setEditMode(field);
@@ -33,11 +40,23 @@ export default function EditProfile() {
     }
   };
 
+  const handleSendVerificationEmail = async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    await sendEmailToVerifyUserEmail(user.email);
+  }
+
+  const handleResetPassword = async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    await sendEmailToResetPassword(user.email);
+  }
+
   return (
     <div>
       <div className="relative group w-[60px] h-[60px]">
         <Avatar className="w-full h-full">
-          <AvatarImage src={user?.avatar || "https://avatars.githubusercontent.com/u/124599?v=4"} />
+          <AvatarImage src={cropImage(user.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
           <AvatarFallback className="bg-primary/10 text-primary">
             {user?.fullName
               .split(" ")
@@ -54,7 +73,7 @@ export default function EditProfile() {
             className="cursor-pointer opacity-0 group-hover:opacity-100 bg-muted/50 p-2 rounded-2xl transition-opacity duration-200"
             htmlFor="avatar-upload"
           >
-            <Edit3 size={16} />
+            <Edit3 size={16}/>
           </Label>
           <Input
             id="avatar-upload"
@@ -66,7 +85,7 @@ export default function EditProfile() {
                 try {
                   const formData = new FormData();
                   formData.append('file', selectedFile);
-                  await update({ userId: user?._id, bodyData: formData });
+                  await update({userId: user?._id, bodyData: formData});
                 } catch (error) {
                   console.error("Error updating avatar:", error);
                 }
@@ -135,14 +154,37 @@ export default function EditProfile() {
         </div>
         <div>
           <span className={'text-sm text-muted-foreground'}>Email</span>
-          <p className={'text-sm'}>{user?.email}</p>
+          <p className={'text-sm flex gap-1 items-center'}>{
+            user?.email} {
+            !user?.isVerified ? (
+              <BadgeCheck className={'text-green-600'} size={15}/>
+            ) : (
+              <Button
+                variant={'link'}
+                onClick={handleSendVerificationEmail}
+                className={'text-xs py-0 cursor-pointer'}
+                disabled={progressEmail}
+              >
+                (Verify)
+              </Button>
+            )}</p>
         </div>
+
       </div>
 
       <Separator className="my-3"/>
 
       {/*  log out*/}
-      <div className={'flex justify-center'}>
+      <div className={'flex justify-center flex-col'}>
+
+        <Button
+          onClick={handleResetPassword}
+          variant={'link'}
+          disabled={progressPass}
+        >
+          Reset Password
+        </Button>
+
         <Button
           disabled={isPending}
           onClick={() => logOut()}
@@ -152,6 +194,7 @@ export default function EditProfile() {
             <span>Log out</span>
           </div>
         </Button>
+
       </div>
     </div>
   );

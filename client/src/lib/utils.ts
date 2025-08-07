@@ -1,10 +1,6 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import {
-  format,
-  isToday,
-  isYesterday,
-} from 'date-fns';
+import {type ClassValue, clsx} from "clsx"
+import {twMerge} from "tailwind-merge"
+import {format, isToday, isYesterday,} from 'date-fns';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -35,4 +31,16 @@ export function shortLastSeen(isoTime: Date): string {
   if (isYesterday(date)) return 'yesterday';
 
   return format(date, 'MMM d');
+}
+
+export const cropImage = (url: string) => {
+
+  if (!url || !url.includes('/upload/')) {
+    return url;
+  }
+
+  return url.replace(
+    '/upload/',
+    '/upload/f_auto,q_auto,c_crop,g_face:auto,h_300,w_300,r_max,x_0,y_0/'
+  )
 }
