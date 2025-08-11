@@ -4,10 +4,7 @@ export interface IMessage {
   senderId: string;
   content: {
     message: string;
-    media: {
-      fileExtension: string;
-      file: string;
-    },
+    media: [],
   },
   deletionStatus: 'none' | 'sender' | 'receiver' | 'both';
   status: 'sent' | 'delivered' | 'read';

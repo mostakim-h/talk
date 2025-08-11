@@ -16,14 +16,8 @@ const chatSchema = new mongoose.Schema({
       trim: true,
     },
     media: {
-      fileExtension: {
-        type: String,
-        default: null,
-      },
-      file: {
-        type: String,
-        default: null,
-      },
+      type: Array,
+      default: [],
     },
   },
   reactions: [{

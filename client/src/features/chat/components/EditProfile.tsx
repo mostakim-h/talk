@@ -81,6 +81,7 @@ export default function EditProfile() {
             accept="image/*"
             onChange={async (e) => {
               const selectedFile = e.target.files?.[0];
+              console.log('Selected file:', selectedFile);
               if (selectedFile) {
                 try {
                   const formData = new FormData();

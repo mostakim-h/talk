@@ -13,7 +13,6 @@ export default function PrivateRoute({children}: {children: JSX.Element}) {
     const checkAuth = async () => {
       if (accessToken) {
         try {
-          if (user !== null) return
           dispatch(setLoading(true));
           await getUser();
           dispatch(setLoading(false));

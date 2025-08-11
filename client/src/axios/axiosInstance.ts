@@ -22,7 +22,7 @@ axiosInstance.interceptors.request.use(
 let isRefreshing = false;
 let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void; }[] = [];
 
-const processQueue = (error: any, token: any) => {
+const processQueue = (error: any, token: string) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
