@@ -4,7 +4,24 @@ import socket from "@/config/socket.ts";
 import {getChats} from "@/apis/chatApis.ts";
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
-import {ChevronDown, Edit3, Paperclip, Phone, Search, Send, Smile, Video, Mic, MicOff, Play, Pause, X} from "lucide-react";
+import {
+  Camera,
+  ChevronDown,
+  Mic,
+  MicOff,
+  Paperclip,
+  Pause,
+  Phone,
+  Play,
+  Plus,
+  RotateCcw,
+  Search,
+  Send,
+  Smile,
+  Square,
+  Video,
+  X
+} from "lucide-react";
 import {Separator} from "@/components/ui/separator.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
@@ -12,8 +29,14 @@ import {Textarea} from "@/components/ui/textarea.tsx";
 import {cropImage, shortLastSeen} from "@/lib/utils.ts";
 import type {IUser} from "@/types/IUser.ts";
 import type {IMessage} from "@/types/message.ts";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+
+interface MediaItem {
+  file: File;
+  url: string;
+  type: 'image' | 'video' | 'audio';
+}
 
 const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   selectedChatUser: IUser,
@@ -28,6 +51,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   })
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const [isTyping, setIsTyping] = useState({
     senderId: null as string | null,
@@ -36,22 +62,26 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
 
   const [msg, setMsg] = useState("");
   const [messages, setMessages] = useState<IMessage[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-
-  console.log('messages', messages)
 
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Image preview states
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const [previewImages, setPreviewImages] = useState<{file: File, url: string}[]>([]);
+  // Media preview states
+  const [showMediaPreview, setShowMediaPreview] = useState(false);
+  const [previewMedia, setPreviewMedia] = useState<MediaItem[]>([]);
 
-  console.log('selectedFiles', selectedFiles);
+  // Camera states
+  const [showCamera, setShowCamera] = useState(false);
+  const [cameraMode, setCameraMode] = useState<'photo' | 'video'>('photo');
+  const [isRecordingVideo, setIsRecordingVideo] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [videoRecorder, setVideoRecorder] = useState<MediaRecorder | null>(null);
 
   const handleInitMsg = (messages: IMessage[]) => {
     if (messages && messages.length > 0) {
@@ -64,22 +94,36 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   // Voice recording functions
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+
+      const options = {mimeType: 'audio/webm;codecs=opus'};
+      if (MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a.40.2')) {
+        options.mimeType = 'audio/mp4;codecs=mp4a.40.2';
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options.mimeType = 'audio/webm;codecs=opus';
+      }
+
+      const recorder = new MediaRecorder(stream, options);
+      const chunks: Blob[] = [];
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          setVoiceBlob(event.data);
+          chunks.push(event.data);
+          setAudioChunks([...chunks]);
         }
       };
 
       recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, {type: recorder.mimeType});
+        setVoiceBlob(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
       setMediaRecorder(recorder);
-      recorder.start();
+      setAudioChunks([]);
+      recorder.start(1000); // Collect data every second
       setIsRecording(true);
+      setIsPaused(false);
       setRecordingTime(0);
 
       recordingInterval.current = setInterval(() => {
@@ -92,10 +136,32 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
     }
   };
 
-  const stopRecording = () => {
+  const pauseRecording = () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.pause();
+      setIsPaused(true);
+      if (recordingInterval.current) {
+        clearInterval(recordingInterval.current);
+        recordingInterval.current = null;
+      }
+    }
+  };
+
+  const resumeRecording = () => {
+    if (mediaRecorder && mediaRecorder.state === 'paused') {
+      mediaRecorder.resume();
+      setIsPaused(false);
+      recordingInterval.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
       mediaRecorder.stop();
       setIsRecording(false);
+      setIsPaused(false);
       if (recordingInterval.current) {
         clearInterval(recordingInterval.current);
         recordingInterval.current = null;
@@ -104,11 +170,13 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   };
 
   const cancelRecording = () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
+    if (mediaRecorder && (mediaRecorder.state === 'recording' || mediaRecorder.state === 'paused')) {
       mediaRecorder.stop();
     }
     setIsRecording(false);
+    setIsPaused(false);
     setVoiceBlob(null);
+    setAudioChunks([]);
     setRecordingTime(0);
     if (recordingInterval.current) {
       clearInterval(recordingInterval.current);
@@ -120,7 +188,14 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
     if (voiceBlob) {
       const reader = new FileReader();
       reader.onload = () => {
-        const base64Audio = reader.result as string;
+        let base64Audio = reader.result as string;
+
+        // Clean the MIME type
+        if (base64Audio.includes('audio/mp4;codecs=')) {
+          base64Audio = base64Audio.replace(/audio\/mp4;codecs=[^;]+;/, 'audio/mp4;');
+        } else if (base64Audio.includes('audio/webm;codecs=')) {
+          base64Audio = base64Audio.replace(/audio\/webm;codecs=[^;]+;/, 'audio/webm;');
+        }
 
         socket.emit("send-message", {
           roomId: currentRoomId,
@@ -130,69 +205,207 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         });
 
         setVoiceBlob(null);
+        setAudioChunks([]);
         setRecordingTime(0);
       };
       reader.readAsDataURL(voiceBlob);
     }
   };
 
-  // Image preview functions
+  // Media preview functions
   const handleFileSelect = (files: FileList | null) => {
     if (!files) return;
 
     const newFiles = Array.from(files);
-    const imageFiles = newFiles.filter(file => file.type.startsWith('image/'));
+    const mediaItems: MediaItem[] = [];
 
-    if (imageFiles.length > 0) {
-      const previews = imageFiles.map(file => ({
-        file,
-        url: URL.createObjectURL(file)
-      }));
+    newFiles.forEach(file => {
+      const url = URL.createObjectURL(file);
+      let type: 'image' | 'video' | 'audio' = 'image';
 
-      setPreviewImages(previews);
-      setSelectedFiles(imageFiles);
-      setShowImagePreview(true);
-    } else {
-      // Handle non-image files directly
-      setSelectedFiles(newFiles);
+      if (file.type.startsWith('video/')) {
+        type = 'video';
+      } else if (file.type.startsWith('audio/')) {
+        type = 'audio';
+      }
+
+      mediaItems.push({file, url, type});
+    });
+
+    if (mediaItems.length > 0) {
+      setPreviewMedia(prev => [...prev, ...mediaItems]);
+      setShowMediaPreview(true);
     }
   };
 
-  const removePreviewImage = (index: number) => {
-    const newPreviews = [...previewImages];
-    const newFiles = [...selectedFiles];
+  const addMoreFiles = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*,video/*,audio/*';
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        handleFileSelect(target.files);
+      }
+    };
+    input.click();
+  };
 
-    // Revoke the URL to prevent memory leaks
-    URL.revokeObjectURL(newPreviews[index].url);
+  const removeMediaItem = (index: number) => {
+    const newMedia = [...previewMedia];
+    URL.revokeObjectURL(newMedia[index].url);
+    newMedia.splice(index, 1);
+    setPreviewMedia(newMedia);
 
-    newPreviews.splice(index, 1);
-    newFiles.splice(index, 1);
-
-    setPreviewImages(newPreviews);
-    setSelectedFiles(newFiles);
-
-    if (newPreviews.length === 0) {
-      setShowImagePreview(false);
+    if (newMedia.length === 0) {
+      setShowMediaPreview(false);
     }
   };
 
-  const closeImagePreview = () => {
-    // Clean up URLs
-    previewImages.forEach(preview => URL.revokeObjectURL(preview.url));
-    setPreviewImages([]);
-    setSelectedFiles([]);
-    setShowImagePreview(false);
+  const closeMediaPreview = () => {
+    previewMedia.forEach(media => URL.revokeObjectURL(media.url));
+    setPreviewMedia([]);
+    setShowMediaPreview(false);
+  };
+
+  // Camera functions
+  const startCamera = async (mode: 'photo' | 'video') => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {facingMode: 'user'},
+        audio: mode === 'video'
+      });
+
+      setCameraStream(stream);
+      setCameraMode(mode);
+      setShowCamera(true);
+
+      // Wait for video element to be available and set stream
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(console.error);
+          };
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Could not access camera. Please check permissions.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    if (videoRecorder && videoRecorder.state !== 'inactive') {
+      videoRecorder.stop();
+    }
+    setShowCamera(false);
+    setIsRecordingVideo(false);
+    setVideoRecorder(null);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current && cameraStream) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const context = canvas.getContext('2d');
+
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+
+      if (context && video.videoWidth > 0) {
+        // Draw the current video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert to blob and create file
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `photo-${Date.now()}.jpg`, {type: 'image/jpeg'});
+            const url = URL.createObjectURL(file);
+            const mediaItem: MediaItem = {file, url, type: 'image'};
+
+            setPreviewMedia(prev => [...prev, mediaItem]);
+            setShowMediaPreview(true);
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.9);
+      } else {
+        alert('Camera not ready. Please wait a moment and try again.');
+      }
+    }
+  };
+
+  const startVideoRecording = () => {
+    if (cameraStream && !isRecordingVideo) {
+      try {
+        const options: MediaRecorderOptions = {};
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+          options.mimeType = 'video/webm;codecs=vp8,opus';
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          options.mimeType = 'video/webm';
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+          options.mimeType = 'video/mp4';
+        }
+
+        const recorder = new MediaRecorder(cameraStream, options);
+        const chunks: Blob[] = [];
+
+        recorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        recorder.onstop = () => {
+          const videoBlob = new Blob(chunks, {type: recorder.mimeType || 'video/webm'});
+          const file = new File([videoBlob], `video-${Date.now()}.webm`, {type: videoBlob.type});
+          const url = URL.createObjectURL(file);
+          const mediaItem: MediaItem = {file, url, type: 'video'};
+
+          setPreviewMedia(prev => [...prev, mediaItem]);
+          setShowMediaPreview(true);
+          stopCamera();
+        };
+
+        recorder.onerror = (event) => {
+          console.error('Recording error:', event);
+          alert('Error occurred while recording video.');
+          setIsRecordingVideo(false);
+        };
+
+        setVideoRecorder(recorder);
+        recorder.start(1000);
+        setIsRecordingVideo(true);
+
+      } catch (error) {
+        console.error('Error starting video recording:', error);
+        alert('Could not start video recording.');
+      }
+    }
+  };
+
+  const stopVideoRecording = () => {
+    if (videoRecorder && videoRecorder.state === 'recording') {
+      videoRecorder.stop();
+      setIsRecordingVideo(false);
+    }
   };
 
   const sendMessage = async () => {
-    if (selectedFiles.length > 0) {
+    if (previewMedia.length > 0) {
       const mediaBase64 = await Promise.all(
-        selectedFiles.map((file) => {
+        previewMedia.map((mediaItem) => {
           return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = () => resolve(reader.result as string);
             reader.onerror = reject;
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(mediaItem.file);
           });
         })
       );
@@ -201,11 +414,10 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         roomId: currentRoomId,
         message: msg,
         media: mediaBase64,
-      })
+      });
 
-      closeImagePreview();
+      closeMediaPreview();
       setMsg('');
-
       return;
     } else if (msg.trim() === "") {
       return;
@@ -214,7 +426,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         roomId: currentRoomId,
         message: msg,
         media: [],
-      })
+      });
       setMsg('');
     }
   };
@@ -282,7 +494,13 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   // Cleanup URLs on unmount
   useEffect(() => {
     return () => {
-      previewImages.forEach(preview => URL.revokeObjectURL(preview.url));
+      previewMedia.forEach(media => URL.revokeObjectURL(media.url));
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+      if (videoRecorder && videoRecorder.state !== 'inactive') {
+        videoRecorder.stop();
+      }
     };
   }, []);
 
@@ -293,7 +511,8 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
           {/* Avatar and User Info */}
           <div className="flex items-center gap-4">
             <Avatar className="w-12 h-12">
-              <AvatarImage src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+              <AvatarImage
+                src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
               <AvatarFallback>
                 {selectedChatUser?.fullName
                   .split(" ")
@@ -321,7 +540,8 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
 
           {/* Buttons */}
           <div className="flex gap-5 items-center">
-            <div className="bg-white/80 dark:bg-teal-950 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
+            <div
+              className="bg-white/80 dark:bg-teal-950 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
               <Video className=" w-5 h-5 text-muted-foreground hover:text-foreground transition-colors"/>
               <Phone className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
             </div>
@@ -374,9 +594,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
                             if (isAudio) {
                               return (
                                 <div key={index} className="flex items-center gap-2 bg-background/20 p-2 rounded-lg">
-                                  <Mic className="w-4 h-4" />
+                                  <Mic className="w-4 h-4"/>
                                   <audio controls className="flex-1">
-                                    <source src={media} type="audio/mpeg" />
+                                    <source src={media} type="audio/mpeg"/>
                                     Your browser does not support the audio element.
                                   </audio>
                                 </div>
@@ -440,7 +660,8 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
           </div>
 
           {showScrollToBottom && (
-            <div className={'p-1 cursor-pointer absolute bottom-2 right-2 z-10 rounded-full bg-muted/50 hover:bg-muted/70 text-muted-foreground hover:text-foreground'}>
+            <div
+              className={'p-1 cursor-pointer absolute bottom-2 right-2 z-10 rounded-full bg-muted/50 hover:bg-muted/70 text-muted-foreground hover:text-foreground'}>
               <ChevronDown/>
             </div>
           )}
@@ -450,33 +671,127 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
 
         <Separator className="my-4"/>
 
-        {/* Image Preview Modal */}
-        {showImagePreview && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-background border rounded-xl p-4 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+        {/* Camera Modal */}
+        {showCamera && (
+          <div className="absolute inset-0 bg-background/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-background border rounded-xl p-4 max-w-2xl w-full">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Preview Images</h3>
-                <Button variant="ghost" size="icon" onClick={closeImagePreview}>
-                  <X className="w-4 h-4" />
+                <h3 className="text-lg font-semibold">
+                  {cameraMode === 'photo' ? 'Take Photo' : 'Record Video'}
+                </h3>
+                <Button variant="ghost" size="icon" onClick={stopCamera}>
+                  <X className="w-4 h-4"/>
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {previewImages.map((preview, index) => (
+              <div className="relative">
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-64 object-cover rounded-lg bg-black"
+                />
+                <canvas ref={canvasRef} className="hidden"/>
+
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="w-12 h-12"
+                    onClick={() => setCameraMode(cameraMode === 'photo' ? 'video' : 'photo')}
+                    disabled={isRecordingVideo}
+                  >
+                    <RotateCcw className="w-5 h-5"/>
+                  </Button>
+
+                  {cameraMode === 'photo' ? (
+                    <Button
+                      size="icon"
+                      className="w-16 h-16 rounded-full"
+                      onClick={capturePhoto}
+                    >
+                      <Camera className="w-6 h-6"/>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      className={`w-16 h-16 rounded-full ${isRecordingVideo ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                      onClick={isRecordingVideo ? stopVideoRecording : startVideoRecording}
+                    >
+                      {isRecordingVideo ? <Square className="w-6 h-6"/> : <Video className="w-6 h-6"/>}
+                    </Button>
+                  )}
+                </div>
+
+                {isRecordingVideo && (
+                  <div
+                    className="absolute top-4 left-4 flex items-center gap-2 bg-red-600 text-white px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"/>
+                    <span className="text-sm font-medium">Recording</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Media Preview Modal */}
+        {showMediaPreview && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-background border rounded-xl p-4 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Preview Media ({previewMedia.length})</h3>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={addMoreFiles}>
+                    <Plus className="w-4 h-4 mr-1"/>
+                    Add More
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={closeMediaPreview}>
+                    <X className="w-4 h-4"/>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                {previewMedia.map((media, index) => (
                   <div key={index} className="relative group">
-                    <img
-                      src={preview.url}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-40 object-cover rounded-lg"
-                    />
+                    {media.type === 'image' && (
+                      <img
+                        src={media.url}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                    )}
+                    {media.type === 'video' && (
+                      <video
+                        src={media.url}
+                        className="w-full h-40 object-cover rounded-lg"
+                        controls
+                      />
+                    )}
+                    {media.type === 'audio' && (
+                      <div className="w-full h-40 bg-muted rounded-lg flex flex-col items-center justify-center">
+                        <Mic className="w-8 h-8 mb-2 text-muted-foreground"/>
+                        <audio controls className="w-full">
+                          <source src={media.url}/>
+                        </audio>
+                      </div>
+                    )}
+
                     <Button
                       variant="destructive"
                       size="icon"
                       className="absolute top-2 right-2 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removePreviewImage(index)}
+                      onClick={() => removeMediaItem(index)}
                     >
-                      <X className="w-3 h-3" />
+                      <X className="w-3 h-3"/>
                     </Button>
+
+                    <div
+                      className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs capitalize">
+                      {media.type}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -489,8 +804,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
                   className="flex-1"
                   rows={2}
                 />
-                <Button onClick={sendMessage} disabled={selectedFiles.length === 0}>
-                  <Send className="w-4 h-4" />
+                <Button onClick={sendMessage} disabled={previewMedia.length === 0}>
+                  <Send className="w-4 h-4 mr-1"/>
+                  Send
                 </Button>
               </div>
             </div>
@@ -501,17 +817,28 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         {isRecording && (
           <div className="flex items-center justify-center gap-4 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg mb-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              <div className={`w-3 h-3 bg-red-500 rounded-full ${!isPaused ? 'animate-pulse' : ''}`}/>
               <span className="text-red-600 dark:text-red-400 font-medium">
-                Recording: {formatTime(recordingTime)}
+                {isPaused ? 'Paused' : 'Recording'}: {formatTime(recordingTime)}
               </span>
             </div>
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={cancelRecording}>
                 Cancel
               </Button>
+              {isPaused ? (
+                <Button size="sm" onClick={resumeRecording}>
+                  <Play className="w-4 h-4 mr-1"/>
+                  Resume
+                </Button>
+              ) : (
+                <Button size="sm" onClick={pauseRecording}>
+                  <Pause className="w-4 h-4 mr-1"/>
+                  Pause
+                </Button>
+              )}
               <Button size="sm" onClick={stopRecording}>
-                <MicOff className="w-4 h-4 mr-1" />
+                <Square className="w-4 h-4 mr-1"/>
                 Stop
               </Button>
             </div>
@@ -521,14 +848,18 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         {/* Voice Message Preview */}
         {voiceBlob && !isRecording && (
           <div className="flex items-center gap-4 p-4 bg-muted rounded-lg mb-4">
-            <Mic className="w-4 h-4" />
+            <Mic className="w-4 h-4"/>
             <span className="text-sm">Voice message recorded ({formatTime(recordingTime)})</span>
+            <audio controls className="flex-1 max-w-xs">
+              <source src={URL.createObjectURL(voiceBlob)} type={voiceBlob.type}/>
+              Your browser does not support the audio element.
+            </audio>
             <div className="flex gap-2 ml-auto">
               <Button size="sm" variant="outline" onClick={() => setVoiceBlob(null)}>
                 Delete
               </Button>
               <Button size="sm" onClick={sendVoiceMessage}>
-                <Send className="w-4 h-4 mr-1" />
+                <Send className="w-4 h-4 mr-1"/>
                 Send
               </Button>
             </div>
@@ -549,6 +880,8 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
             <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
               <Smile className="w-4 h-4"/>
             </Button>
+
+            {/* File Upload Button */}
             <Label
               className="w-8 h-8 text-muted-foreground hover:text-foreground cursor-pointer flex items-center justify-center"
               htmlFor="file-upload"
@@ -560,18 +893,26 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
               id="file-upload"
               multiple={true}
               type="file"
-              accept="*"
+              accept="image/*,video/*,audio/*"
               onChange={(e) => handleFileSelect(e.target.files)}
             />
+
+            {/* Camera Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-8 h-8 text-muted-foreground hover:text-foreground"
+              onClick={() => startCamera('photo')}
+            >
+              <Camera className="w-4 h-4"/>
+            </Button>
 
             {/* Voice Record Button */}
             <Button
               variant="ghost"
               size="icon"
               className={`w-8 h-8 ${isRecording ? 'text-red-500' : 'text-muted-foreground hover:text-foreground'}`}
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={stopRecording}
+              onClick={isRecording ? stopRecording : startRecording}
               disabled={!!voiceBlob}
             >
               {isRecording ? <MicOff className="w-4 h-4"/> : <Mic className="w-4 h-4"/>}
@@ -580,7 +921,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
             <Button
               size="icon"
               className="w-8 h-8 rounded-lg dark:bg-primary/20 bg-primary/10 text-muted-foreground hover:text-white cursor-pointer"
-              disabled={!(selectedFiles.length > 0) && !msg.trim() && !voiceBlob}
+              disabled={!(previewMedia.length > 0) && !msg.trim() && !voiceBlob}
               onClick={sendMessage}
             >
               <Send className="w-4 h-4"/>

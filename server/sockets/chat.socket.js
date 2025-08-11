@@ -31,6 +31,8 @@ module.exports = function(io) {
     socket.on("send-message", async ({ roomId, message, media, type }) => {
       let uploadedUrls = [];
 
+      console.log({roomId, message, media, type})
+
       if (media && media.length > 0) {
         for (let base64File of media) {
           try {
@@ -39,11 +41,8 @@ module.exports = function(io) {
               resource_type: 'auto',
             };
 
-            // Handle different media types
+            base64File = base64File?.replace(/;codecs=[^;]+/g, '');
             if (type === 'voice') {
-              // Remove codec info from MIME type
-              base64File = base64File.replace(/;codecs=[^;]+/g, '');
-
               uploadOptions = {
                 folder: "chat_media",
                 resource_type: 'video',
