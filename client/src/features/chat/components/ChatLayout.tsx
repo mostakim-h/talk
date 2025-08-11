@@ -53,7 +53,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const [isTyping, setIsTyping] = useState({
     senderId: null as string | null,
@@ -69,7 +68,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const recordingInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Media preview states
@@ -109,7 +107,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           chunks.push(event.data);
-          setAudioChunks([...chunks]);
         }
       };
 
@@ -120,7 +117,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
       };
 
       setMediaRecorder(recorder);
-      setAudioChunks([]);
       recorder.start(1000); // Collect data every second
       setIsRecording(true);
       setIsPaused(false);
@@ -176,7 +172,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
     setIsRecording(false);
     setIsPaused(false);
     setVoiceBlob(null);
-    setAudioChunks([]);
     setRecordingTime(0);
     if (recordingInterval.current) {
       clearInterval(recordingInterval.current);
@@ -205,7 +200,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         });
 
         setVoiceBlob(null);
-        setAudioChunks([]);
         setRecordingTime(0);
       };
       reader.readAsDataURL(voiceBlob);
@@ -502,7 +496,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
         videoRecorder.stop();
       }
     };
-  }, []);
+  }, [cameraStream, previewMedia, videoRecorder]);
 
   return (
     <Card className="flex-1 flex flex-col h-full pt-2 gap-0">
