@@ -34,6 +34,7 @@ import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.tsx";
 import EmojiPicker from "emoji-picker-react";
 import {useTheme} from "@/providers/ThemeProvider.tsx";
+import EnhancedChatHeader from "@/features/chat/components/chat-body/ChatHeader.tsx";
 
 interface MediaItem {
   file: File;
@@ -505,49 +506,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
 
   return (
     <Card className="flex-1 flex flex-col h-full pt-2 gap-0">
-      <CardHeader className="px-2 py-0">
-        <div className="bg-muted/90 flex items-center justify-between gap-4 px-4 py-2 rounded-lg">
-          {/* Avatar and User Info */}
-          <div className="flex items-center gap-4">
-            <Avatar className="w-12 h-12">
-              <AvatarImage
-                src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
-              <AvatarFallback>
-                {selectedChatUser?.fullName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="m-0 font-medium">
-                {selectedChatUser?.fullName || "Select a user"}
-              </h2>
-              <p
-                className={`text-xs ${
-                  selectedChatUser?.isOnline
-                    ? "text-green-500"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {selectedChatUser?.isOnline
-                  ? "Online"
-                  : selectedChatUser && shortLastSeen(selectedChatUser?.updatedAt)}
-              </p>
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex gap-5 items-center">
-            <div
-              className="bg-white/80 dark:bg-teal-950 p-3 px-4 rounded-md transition-colors cursor-pointer flex gap-5 items-center">
-              <Video className=" w-5 h-5 text-muted-foreground hover:text-foreground transition-colors"/>
-              <Phone className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
-            </div>
-            <Search className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors"/>
-          </div>
-        </div>
-      </CardHeader>
+      <EnhancedChatHeader
+        selectedChatUser={selectedChatUser}
+      />
 
       <CardContent className="flex-1 flex flex-col overflow-hidden">
         {/* Chat Messages */}
