@@ -2,7 +2,7 @@ import {useEffect, useRef, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import socket from "@/config/socket.ts";
 import {getChats} from "@/apis/chatApis.ts";
-import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
+import {Card, CardContent} from "@/components/ui/card.tsx";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import {
   Camera,
@@ -11,11 +11,9 @@ import {
   MicOff,
   Paperclip,
   Pause,
-  Phone,
   Play,
   Plus,
   RotateCcw,
-  Search,
   Send,
   Smile,
   Square,
@@ -26,7 +24,7 @@ import {Separator} from "@/components/ui/separator.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ScrollArea} from "@/components/ui/scroll-area.tsx";
 import {Textarea} from "@/components/ui/textarea.tsx";
-import {cropImage, shortLastSeen} from "@/lib/utils.ts";
+import {shortLastSeen} from "@/lib/utils.ts";
 import type {IUser} from "@/types/IUser.ts";
 import type {IMessage} from "@/types/message.ts";
 import {Input} from "@/components/ui/input";
@@ -54,7 +52,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
     enabled: !!currentRoomId,
   })
 
-  const { theme } = useTheme()
+  const {theme} = useTheme()
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null);
