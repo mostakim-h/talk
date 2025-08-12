@@ -31,6 +31,9 @@ import type {IUser} from "@/types/IUser.ts";
 import type {IMessage} from "@/types/message.ts";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.tsx";
+import EmojiPicker from "emoji-picker-react";
+import {useTheme} from "@/providers/ThemeProvider.tsx";
 
 interface MediaItem {
   file: File;
@@ -49,6 +52,8 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
     queryFn: ({signal}) => getChats(currentRoomId, signal),
     enabled: !!currentRoomId,
   })
+
+  const { theme } = useTheme()
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -871,9 +876,24 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
             rows={1}
           />
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
-              <Smile className="w-4 h-4"/>
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="w-8 h-8 text-muted-foreground hover:text-foreground">
+                  <Smile className="w-4 h-4"/>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className={'p-0 w-auto h-auto shadow-none'}>
+                <EmojiPicker
+                  emojiStyle={'facebook'}
+                  skinTonesDisabled={true}
+                  autoFocusSearch={true}
+                  theme={theme}
+                  onEmojiClick={(emoji) => {
+                    setMsg((prev) => prev + emoji.emoji);
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
 
             {/* File Upload Button */}
             <Label
