@@ -6,6 +6,7 @@ import {Avatar} from "@/components/ui/avatar.tsx";
 import {AvatarFallback, AvatarImage} from "@/components/ui/avatar.tsx";
 import type {IUser} from "@/types/IUser.ts";
 import * as React from "react";
+import {Card} from "@/components/ui/card.tsx";
 
 // WebRTC Configuration
 const rtcConfig = {
@@ -306,7 +307,7 @@ const CallInterface = (
   if (callState === CALL_STATES.IDLE) return null;
 
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <Card className="fixed inset-0 z-50 flex flex-col">
       {/* Remote video/avatar */}
       <div className="flex-1 relative">
         {callType === CALL_TYPES.VIDEO ? (
@@ -317,13 +318,18 @@ const CallInterface = (
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
+          <div className="w-full h-full flex items-center justify-center from-blue-500 to-purple-600">
             <div className="text-center">
-              <div className="w-32 h-32 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-4">
-                <span className="text-4xl text-white font-bold">
-                  {selectedChatUser?.fullName?.split(" ").map(n => n[0]).join("")}
-                </span>
-              </div>
+              <Avatar className="w-32 h-32 flex items-center justify-center mx-auto mb-4">
+                <AvatarImage
+                  src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+                <AvatarFallback>
+                  {selectedChatUser?.fullName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
               <h2 className="text-2xl text-white font-medium">{selectedChatUser?.fullName}</h2>
               <p className="text-white/80">
                 {callState === CALL_STATES.CALLING && "Calling..."}
@@ -386,7 +392,7 @@ const CallInterface = (
           </button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -407,13 +413,18 @@ const IncomingCallModal = (
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full mx-4">
+      <Card className="rounded-lg p-6 max-w-sm w-full mx-4">
         <div className="text-center">
-          <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl text-white font-bold">
-              {selectedChatUser?.fullName?.split(" ").map(n => n[0]).join("")}
-            </span>
-          </div>
+          <Avatar className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+            <AvatarImage
+              src={cropImage(selectedChatUser.avatar) || "https://avatars.githubusercontent.com/u/124599?v=4"}/>
+            <AvatarFallback>
+              {selectedChatUser?.fullName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
           <h3 className="text-lg font-semibold mb-2">
             {selectedChatUser?.fullName}
           </h3>
@@ -436,7 +447,7 @@ const IncomingCallModal = (
             </button>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
