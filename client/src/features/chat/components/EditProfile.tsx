@@ -157,7 +157,7 @@ export default function EditProfile() {
           <span className={'text-sm text-muted-foreground'}>Email</span>
           <p className={'text-sm flex gap-1 items-center'}>{
             user?.email} {
-            !user?.isVerified ? (
+            user?.isVerified ? (
               <BadgeCheck className={'text-green-600'} size={15}/>
             ) : (
               <Button

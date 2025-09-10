@@ -90,7 +90,7 @@ exports.register = async function (req, res) {
     }, null, {lean: true});
 
     if (existing) {
-      return sendRes(res, 400, "User already exists", {});
+      return sendRes(res, 400, "User already exists with this email address!", {});
     }
 
     const hashed = await bcrypt.hash(password, 12);
