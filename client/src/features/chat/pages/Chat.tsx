@@ -9,6 +9,7 @@ import ChatLayout from "@/features/chat/components/ChatLayout.tsx";
 import ChatUserDetails from "@/features/chat/components/ChatUserDetails.tsx";
 import type {IUser} from "@/types/IUser.ts";
 import {useAppSelector} from "@/redux/hooks.ts";
+import type {IMessage} from "@/types/message.ts";
 
 export default function ChatDashboard() {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -18,6 +19,7 @@ export default function ChatDashboard() {
   // @ts-expect-error
   const [selectedChatUser, setSelectedChatUser] = useState<IUser>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
+  const [messages, setMessages] = useState<IMessage[]>([]);
 
   const handleSelectUser = (selectedUser: IUser) => {
     setSelectedChatUser(selectedUser);
@@ -43,10 +45,13 @@ export default function ChatDashboard() {
             selectedChatUser={selectedChatUser}
             currentRoomId={currentRoomId}
             userId={userId}
+            messages={messages}
+            setMessages={setMessages}
           />
 
           {/* Right Panel - Shared Files */}
           <ChatUserDetails
+            messages={messages}
             user={selectedChatUser}
           />
         </>

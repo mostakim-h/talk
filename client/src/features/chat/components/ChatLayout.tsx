@@ -40,10 +40,12 @@ interface MediaItem {
   type: 'image' | 'video' | 'audio';
 }
 
-const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
+const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessages}: {
   selectedChatUser: IUser,
   currentRoomId: string,
-  userId: string
+  userId: string,
+  messages: IMessage[],
+  setMessages: (messages: IMessage[]) => void,
 }) => {
   const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false);
   const {data} = useQuery({
@@ -64,7 +66,6 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
   });
 
   const [msg, setMsg] = useState("");
-  const [messages, setMessages] = useState<IMessage[]>([]);
 
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
