@@ -8,6 +8,7 @@ import {rootRoutes} from "./router/rootRoutes.ts";
 import BlankLayout from "./layouts/BlankLayout.tsx";
 import {useInitSocket} from "./hooks/useInitSocket.tsx";
 import type {IRoute} from "@/types/route.ts";
+import Loading from "@/components/Loading.tsx";
 
 function renderComponent(
   Component: React.LazyExoticComponent<() => React.JSX.Element>,
@@ -55,7 +56,7 @@ function App() {
             key={route.path}
             path={route.path}
             element={
-              <Suspense fallback={<div>Loading...</div>}>
+              <Suspense fallback={<Loading/>}>
                 {route.isPublic ? (
                   renderComponent(Component, Layout)
                 ) : (

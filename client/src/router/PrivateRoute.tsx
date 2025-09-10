@@ -3,6 +3,7 @@ import {type JSX, useEffect} from "react";
 import {setLoading, setUser} from "../redux/slices/authSlice.js";
 import {useDispatch, useSelector} from "react-redux";
 import {getUser} from "@/apis/userApis.ts";
+import Loading from "@/components/Loading.tsx";
 
 export default function PrivateRoute({children}: {children: JSX.Element}) {
   const {user, accessToken, loading} = useSelector((state: any) => state.auth);
@@ -28,6 +29,6 @@ export default function PrivateRoute({children}: {children: JSX.Element}) {
     checkAuth();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loading/>;
   return user ? children : <Navigate to={'/login'}/>
 }
