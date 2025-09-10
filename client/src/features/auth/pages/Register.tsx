@@ -179,14 +179,14 @@ export default function Register() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex flex-col space-y-4 mt-4">
+          <CardFooter className="flex flex-col space-y-4 mt-8">
             {error && (
               <Alert variant="destructive">
                 <AlertCircleIcon/>
                 <AlertTitle>{error?.response?.data?.message}</AlertTitle>
               </Alert>
             )}
-            <Button type="submit" className="w-full" disabled={isPending}>
+            <Button type="submit" className="w-full" variant={'outline'} disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin"/>

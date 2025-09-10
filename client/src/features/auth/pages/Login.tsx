@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import {Loader2, Mail, Lock, Eye, EyeOff, AlertCircleIcon} from "lucide-react"
 import type {IUser} from "@/types/IUser.ts";
 import type {AxiosError} from "axios";
 
@@ -33,11 +33,10 @@ interface AuthState {
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
-  const [loginError, setLoginError] = useState<string | null>(null)
 
   const navigate = useNavigate()
   const user = useSelector((state: AuthState) => state.auth.user)
-  const { mutateAsync: login, isPending } = useLogin()
+  const { mutateAsync: login, isPending, error } = useLogin()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,11 +48,14 @@ export default function Login() {
 
   const handleSubmit = async (values: LoginFormValues) => {
     try {
-      setLoginError(null)
       await login(values)
     } catch (err) {
-      const error = err as AxiosError
-      setLoginError(error.message || "Login failed. Please try again.")
+      const axiosError = err as AxiosError
+      if (axiosError.response) {
+        console.error("Login failed:", axiosError.response.data)
+      } else {
+        console.error("Login failed:", axiosError.message)
+      }
     }
   }
 
@@ -74,9 +76,10 @@ export default function Login() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-              {loginError && (
+              {error && (
                 <Alert variant="destructive">
-                  <AlertDescription>{loginError}</AlertDescription>
+                  <AlertCircleIcon/>
+                  <AlertDescription>{error?.response?.data?.message}</AlertDescription>
                 </Alert>
               )}
 
@@ -141,17 +144,17 @@ export default function Login() {
               />
 
               <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="link"
-                  className="px-0 text-sm text-slate-600 hover:text-slate-900"
+                <p
+                  className="p-0 text-sm text-slate-600 m-0 cursor-pointer select-none"
+                  aria-disabled={isPending}
                   onClick={() => navigate("/forget-password")}
                 >
                   Forgot password?
-                </Button>
+                </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isPending}>
+
+              <Button type="submit" className="w-full" variant={'outline'} disabled={isPending}>
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -166,6 +169,7 @@ export default function Login() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-4">
+
           <div className="relative w-full">
             <div className="relative flex justify-center text-xs uppercase">
               <span className="px-2 text-slate-500">Don't have an account?</span>

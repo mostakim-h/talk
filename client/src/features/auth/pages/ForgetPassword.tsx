@@ -93,7 +93,7 @@ export default function ForgetPassword() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4 mt-4">
-            <Button type="submit" className="w-full" disabled={isPending || !form.email}>
+            <Button type="submit" className="w-full" variant={"outline"} disabled={isPending || !form.email}>
               {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin"/>
