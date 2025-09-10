@@ -30,7 +30,7 @@ import type {IMessage} from "@/types/message.ts";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.tsx";
-import EmojiPicker from "emoji-picker-react";
+import EmojiPicker, {EmojiStyle, Theme} from "emoji-picker-react";
 import {useTheme} from "@/providers/ThemeProvider.tsx";
 import EnhancedChatHeader from "@/features/chat/components/chat-body/ChatHeader.tsx";
 
@@ -843,10 +843,10 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId}: {
               </PopoverTrigger>
               <PopoverContent className={'p-0 w-auto h-auto shadow-none'}>
                 <EmojiPicker
-                  emojiStyle={'facebook'}
+                  emojiStyle={EmojiStyle.FACEBOOK}
                   skinTonesDisabled={true}
                   autoFocusSearch={true}
-                  theme={theme}
+                  theme={theme as Theme}
                   onEmojiClick={(emoji) => {
                     setMsg((prev) => prev + emoji.emoji);
                   }}

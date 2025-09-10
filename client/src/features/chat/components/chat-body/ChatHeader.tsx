@@ -31,17 +31,19 @@ const CALL_STATES = {
   ENDED: 'ended'
 };
 
-// Real socket connection - you should import this from your socket context/service
-// import { socket } from '../context/SocketContext'; // Adjust path as needed
-// For demo purposes, creating a mock that shows the real implementation
+type incomingCallType = {
+  callType: string,
+  from: string,
+  offer: RTCSessionDescriptionInit
+} | null;
 
 // WebRTC Call Manager Hook
 const useWebRTCCall = () => {
   const [callState, setCallState] = useState(CALL_STATES.IDLE);
-  const [callType, setCallType] = useState<string>(null);
+  const [callType, setCallType] = useState<string | null>(null);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isVideoMuted, setIsVideoMuted] = useState(false);
-  const [incomingCall, setIncomingCall] = useState<string>(null);
+  const [incomingCall, setIncomingCall] = useState<incomingCallType>(null);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef<object>(null);

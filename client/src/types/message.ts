@@ -8,7 +8,7 @@ export interface IMessage {
   },
   deletionStatus: 'none' | 'sender' | 'receiver' | 'both';
   status: 'sent' | 'delivered' | 'read';
-  type: 'text' | 'image' | 'video' | 'file';
+  type: 'text' | 'image' | 'video' | 'file' | 'voice';
   reactions?: {
     [userId: string]: string; // userId mapped to reaction type (e.g., "like", "love")
   };
