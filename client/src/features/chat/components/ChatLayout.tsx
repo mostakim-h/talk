@@ -536,7 +536,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
                     <div
                       className={`p-3 rounded-2xl ${
                         message.senderId === userId
-                          ? "bg-primary dark:bg-primary/20 text-primary-foreground dark:text-white rounded-br-md"
+                          ? "bg-primary/20 text-primary dark:bg-primary/20 dark:text-primary-foreground dark:text-white rounded-br-md"
                           : "bg-muted rounded-bl-md"
                       }`}
                     >
