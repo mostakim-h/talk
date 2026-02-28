@@ -4,9 +4,10 @@ import {setLoading, setUser} from "../redux/slices/authSlice.js";
 import {useDispatch, useSelector} from "react-redux";
 import {getUser} from "@/apis/userApis.ts";
 import Loading from "@/components/Loading.tsx";
+import type {RootState} from "@/redux/store.ts";
 
 export default function PrivateRoute({children}: {children: JSX.Element}) {
-  const {user, accessToken, loading} = useSelector((state: any) => state.auth);
+  const {user, accessToken, loading} = useSelector((state: RootState) => state.auth);
 
   const dispatch = useDispatch();
 
@@ -27,7 +28,7 @@ export default function PrivateRoute({children}: {children: JSX.Element}) {
       }
     };
     checkAuth();
-  }, []);
+  }, [accessToken, dispatch]);
 
   if (loading) return <Loading/>;
   return user ? children : <Navigate to={'/login'}/>

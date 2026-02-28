@@ -12,12 +12,11 @@ import {useAppSelector} from "@/redux/hooks.ts";
 import type {IMessage} from "@/types/message.ts";
 
 export default function ChatDashboard() {
+  const user = useAppSelector((state) => state.auth.user);
+  const userId = user?._id;
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
-  const {_id: userId} = useAppSelector((state) => state.auth.user);
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  const [selectedChatUser, setSelectedChatUser] = useState<IUser>(null);
+  const [selectedChatUser, setSelectedChatUser] = useState<IUser | null>(null);
   const [currentRoomId, setCurrentRoomId] = useState<string>('');
   const [messages, setMessages] = useState<IMessage[]>([]);
 

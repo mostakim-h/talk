@@ -8,6 +8,7 @@ import {Label} from "@radix-ui/react-label";
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {ArrowLeft, Loader2, Mail} from "lucide-react";
+import type {AxiosError} from "axios";
 
 export default function ForgetPassword() {
   const {mutateAsync: sendEmailToResetPassword, isPending, error} = useSendEmailToResetPassword()
@@ -24,6 +25,8 @@ export default function ForgetPassword() {
       await sendEmailToResetPassword(form.email);
       setSuccess(true);
     } catch (err: any) {
+      const axiosError = err as AxiosError
+      console.error('Error sending reset password email:', axiosError.response?.data || axiosError.message);
       alert(err.message || 'Login failed. Please try again.');
     }
   }
@@ -74,7 +77,7 @@ export default function ForgetPassword() {
           <CardContent className="space-y-4">
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error?.response?.data?.message}</AlertDescription>
+                <AlertDescription>{(error as AxiosError)?.response?.data?.message || error.message}</AlertDescription>
               </Alert>
             )}
 

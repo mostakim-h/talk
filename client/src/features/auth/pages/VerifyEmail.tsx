@@ -69,8 +69,12 @@ export default function VerifyEmail() {
                 <Button
                   variant="outline"
                   onClick={async () => {
-                    setVerified(false);
-                    await verifyEmail();
+                    const queryParams = new URLSearchParams(window.location.search);
+                    const token = queryParams.get('token');
+                    if (token) {
+                      setVerified(false);
+                      await verifyEmail(token);
+                    }
                   }}
                 >
                   Retry Verification

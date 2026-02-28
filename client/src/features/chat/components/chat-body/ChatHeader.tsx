@@ -45,11 +45,11 @@ const useWebRTCCall = () => {
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [incomingCall, setIncomingCall] = useState<incomingCallType>(null);
 
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef<object>(null);
-  const peerConnectionRef = useRef<object>(null);
-  const localStreamRef = useRef<object>(null);
-  const remoteStreamRef = useRef<object>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   // Initialize peer connection
   const initializePeerConnection = useCallback((recipientId: string) => {
@@ -104,7 +104,7 @@ const useWebRTCCall = () => {
       const peerConnection = initializePeerConnection(recipientId);
       peerConnectionRef.current = peerConnection;
 
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track: MediaStreamTrack) => {
         peerConnection.addTrack(track, stream);
       });
 
@@ -147,7 +147,7 @@ const useWebRTCCall = () => {
       const peerConnection = initializePeerConnection(incomingCall.from);
       peerConnectionRef.current = peerConnection;
 
-      stream.getTracks().forEach(track => {
+      stream.getTracks().forEach((track: MediaStreamTrack) => {
         peerConnection.addTrack(track, stream);
       });
 

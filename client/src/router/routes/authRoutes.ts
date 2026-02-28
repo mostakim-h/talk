@@ -23,7 +23,7 @@ export const authRoutes = [
   },
   {
     path: '/forget-password',
-    element: lazy(() => import('../../features/auth/pages/ForgetPassword.jsx')),
+    element: lazy(() => import('../../features/auth/pages/ForgetPassword.tsx')),
     layout: 'publicLayout'
   }
 ];

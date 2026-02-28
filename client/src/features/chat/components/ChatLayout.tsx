@@ -45,7 +45,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
   currentRoomId: string,
   userId: string,
   messages: IMessage[],
-  setMessages: (messages: IMessage[]) => void,
+  setMessages: (messages: IMessage[] | ((prev: IMessage[]) => IMessage[])) => void,
 }) => {
   const [showScrollToBottom, setShowScrollToBottom] = useState<boolean>(false);
   const {data} = useQuery({

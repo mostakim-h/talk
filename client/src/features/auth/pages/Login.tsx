@@ -79,7 +79,7 @@ export default function Login() {
               {error && (
                 <Alert variant="destructive">
                   <AlertCircleIcon/>
-                  <AlertDescription>{error?.response?.data?.message}</AlertDescription>
+                  <AlertDescription>{(error as AxiosError)?.response?.data?.message || error.message}</AlertDescription>
                 </Alert>
               )}
 

@@ -8,6 +8,7 @@ import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} f
 import {Input} from "@/components/ui/input.tsx";
 import {Label} from "@radix-ui/react-label";
 import {Alert, AlertTitle} from "@/components/ui/alert.tsx";
+import type {AxiosError} from "axios";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -183,7 +184,7 @@ export default function Register() {
             {error && (
               <Alert variant="destructive">
                 <AlertCircleIcon/>
-                <AlertTitle>{error?.response?.data?.message}</AlertTitle>
+                <AlertTitle>{(error as AxiosError)?.response?.data?.message || error.message}</AlertTitle>
               </Alert>
             )}
             <Button type="submit" className="w-full" variant={'outline'} disabled={isPending}>

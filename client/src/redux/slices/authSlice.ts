@@ -1,4 +1,4 @@
-import {createSlice} from "@reduxjs/toolkit";
+import {createSlice, type PayloadAction} from "@reduxjs/toolkit";
 import type {IUser} from "@/types/IUser.ts";
 
 interface IAuthState {
@@ -17,21 +17,21 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setCredentials: (state, action) => {
+    setCredentials: (state, action: PayloadAction<{user: IUser, accessToken: string}>) => {
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
     },
-    setAccessToken: (state, action) => {
+    setAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
     },
     clearAuth: (state) => {
       state.user = null;
       state.accessToken = null;
     },
-    setLoading: (state, action) => {
+    setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
-    setUser: (state, action) => {
+    setUser: (state, action: PayloadAction<IUser | null>) => {
       state.user = action.payload;
     }
   }

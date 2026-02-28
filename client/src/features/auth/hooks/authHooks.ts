@@ -7,7 +7,7 @@ export const useLogin = () => {
   const dispatch = useDispatch();
 
   return useMutation({
-    mutationFn: async ({email, password} : {email: string, password: string | number}) => {
+    mutationFn: async ({email, password} : {email: string, password: string}) => {
 
       const {data} = await api.post('/auth/login', {email, password});
 
@@ -29,7 +29,7 @@ export const useRegister = () => {
   const dispatch = useDispatch();
 
   return useMutation({
-    mutationFn: async ({firstName, lastName, email, password, confirmPassword}: {firstName: string, lastName: string, email: string, password: string | number, confirmPassword: string | number}) => {
+    mutationFn: async ({firstName, lastName, email, password, confirmPassword}: {firstName: string, lastName: string, email: string, password: string, confirmPassword: string}) => {
 
       const {data} = await api.post('/auth/register', {firstName, lastName, email, password, confirmPassword});
 
@@ -113,7 +113,7 @@ export const useSendEmailToResetPassword = () => {
 
 export const useResetPassword = () => {
   return useMutation({
-    mutationFn: async ({ token, password } : {token: string, password: string | number}) => {
+    mutationFn: async ({ token, password } : {token: string, password: string}) => {
       const { data } = await api.post(`/auth/reset-password?token=${token}`, { newPassword: password });
 
       const {message, success} = data;
