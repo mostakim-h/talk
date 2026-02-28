@@ -33,6 +33,8 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover.t
 import EmojiPicker, {EmojiStyle, Theme} from "emoji-picker-react";
 import {useTheme} from "@/providers/ThemeProvider.tsx";
 import EnhancedChatHeader from "@/features/chat/components/chat-body/ChatHeader.tsx";
+import AudioSkeleton from "@/features/chat/components/AudioSkeleton.tsx";
+import ImageSkeleton from "@/features/chat/components/ImageSkeleton.tsx";
 
 interface MediaItem {
   file: File;
@@ -66,6 +68,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
   });
 
   const [msg, setMsg] = useState("");
+
+  // Loading media states
+  const [loadingMediaMessages, setLoadingMediaMessages] = useState<Set<string>>(new Set());
 
   // Voice recording states
   const [isRecording, setIsRecording] = useState(false);
@@ -438,7 +443,51 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
 
   useEffect(() => {
     socket.on("receive-message", (data: IMessage) => {
-      setMessages((prev: IMessage[]) => [...prev, data]);
+      setMessages((prev: IMessage[]) => {
+        // Check if message already exists (from media-loading placeholder)
+        const exists = prev.some(msg => msg._id === data._id);
+        if (exists) {
+          // Replace placeholder with actual message
+          return prev.map(msg => msg._id === data._id ? data : msg);
+        }
+        return [...prev, data];
+      });
+      // Remove from loading set when message is fully received
+      setLoadingMediaMessages(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(data._id);
+        return newSet;
+      });
+    })
+
+    socket.on("media-loading", (data: { messageId: string, roomId: string, senderId: string, type: string }) => {
+      // Add message to loading set when media is being uploaded
+      setLoadingMediaMessages(prev => new Set(prev).add(data.messageId));
+
+      // Add placeholder message to messages array so skeleton is displayed
+      const placeholderMessage: IMessage = {
+        _id: data.messageId,
+        roomId: data.roomId,
+        senderId: data.senderId,
+        content: {
+          message: "",
+          media: [""], // Empty placeholder for media
+        },
+        type: data.type,
+        deletionStatus: "none",
+        status: "sent",
+        reactions: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      setMessages((prev: IMessage[]) => {
+        // Only add if not already exists
+        if (!prev.some(msg => msg._id === data.messageId)) {
+          return [...prev, placeholderMessage];
+        }
+        return prev;
+      });
     })
 
     socket.on("user-typing", (data: { senderId: string }) => {
@@ -457,6 +506,7 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
 
     return () => {
       socket.off("receive-message");
+      socket.off("media-loading");
       socket.off("user-typing");
     };
   }, []);
@@ -546,40 +596,53 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
                             message.content.media.length > 1 ? "grid-cols-2" : "grid-cols-1"
                           }`}
                         >
-                          {message.content.media.map((media: string, index: number) => {
-                            const isVideo = media.match(/\.(mp4|webm|ogg)$/i) || media.includes('video');
-                            const isAudio = media.match(/\.(mp3|wav|m4a|ogg)$/i) || media.includes('audio') || message.type === 'voice';
+                          {loadingMediaMessages.has(message._id) ? (
+                            // Show skeleton while loading
+                            message.type === 'voice' ? (
+                              <AudioSkeleton />
+                            ) : (
+                              <ImageSkeleton
+                                count={message.content.media.length}
+                                isGrid={message.content.media.length > 1}
+                              />
+                            )
+                          ) : (
+                            // Show actual media when loaded
+                            message.content.media.map((media: string, index: number) => {
+                              const isVideo = media.match(/\.(mp4|webm|ogg)$/i) || media.includes('video');
+                              const isAudio = media.match(/\.(mp3|wav|m4a|ogg)$/i) || media.includes('audio') || message.type === 'voice';
 
-                            if (isAudio) {
-                              return (
-                                <div key={index} className="flex items-center gap-2 bg-background/20 p-2 rounded-lg">
-                                  <Mic className="w-4 h-4"/>
-                                  <audio controls className="flex-1">
-                                    <source src={media} type="audio/mpeg"/>
-                                    Your browser does not support the audio element.
-                                  </audio>
-                                </div>
-                              );
-                            } else if (isVideo) {
-                              return (
-                                <video
-                                  key={index}
-                                  src={media}
-                                  controls
-                                  className="max-w-full h-auto rounded-lg"
-                                />
-                              );
-                            } else {
-                              return (
-                                <img
-                                  key={index}
-                                  src={media}
-                                  alt={`Media ${index + 1}`}
-                                  className="max-w-full h-auto rounded-lg"
-                                />
-                              );
-                            }
-                          })}
+                              if (isAudio) {
+                                return (
+                                  <div key={index} className="flex items-center gap-2 bg-background/20 p-2 rounded-lg">
+                                    <Mic className="w-4 h-4"/>
+                                    <audio controls className="flex-1">
+                                      <source src={media} type="audio/mpeg"/>
+                                      Your browser does not support the audio element.
+                                    </audio>
+                                  </div>
+                                );
+                              } else if (isVideo) {
+                                return (
+                                  <video
+                                    key={index}
+                                    src={media}
+                                    controls
+                                    className="max-w-full h-auto rounded-lg"
+                                  />
+                                );
+                              } else {
+                                return (
+                                  <img
+                                    key={index}
+                                    src={media}
+                                    alt={`Media ${index + 1}`}
+                                    className="max-w-full h-auto rounded-lg"
+                                  />
+                                );
+                              }
+                            })
+                          )}
                         </div>
                       )}
 

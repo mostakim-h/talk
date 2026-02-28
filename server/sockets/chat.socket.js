@@ -34,6 +34,20 @@ module.exports = function(io) {
 
       console.log({roomId, message, media, type})
 
+      // Generate message ID immediately
+      const messageId = new Date().getTime().toString();
+      const senderId = users[socket.id];
+
+      // If media exists, emit loading event to show skeleton on receiver's side
+      if (media && media.length > 0) {
+        io.to(roomId).emit("media-loading", {
+          messageId: messageId,
+          roomId: roomId,
+          senderId: senderId,
+          type: type || 'text'
+        });
+      }
+
       if (media && media.length > 0) {
         for (let base64File of media) {
           try {
@@ -76,7 +90,8 @@ module.exports = function(io) {
       }
 
       const messageData = {
-        senderId: users[socket.id],
+        _id: messageId,
+        senderId: senderId,
         roomId: roomId,
         content: {
           message: message,
@@ -85,16 +100,15 @@ module.exports = function(io) {
         type: type || 'text',
         reactions: [],
         createdAt: new Date(),
-        _id: new Date().getTime().toString(),
       };
 
-      // Emit to room first for real-time experience
+      // Emit to room for real-time experience
       io.to(roomId).emit("receive-message", messageData);
 
       // Save to database
       ChatModel.create({
         roomId: roomId,
-        senderId: users[socket.id],
+        senderId: senderId,
         content: {
           message: message,
           media: uploadedUrls
