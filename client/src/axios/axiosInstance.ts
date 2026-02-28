@@ -4,7 +4,7 @@ import {clearAuth} from "../redux/slices/authSlice.js";
 import {refreshToken} from "@/apis/authApis.ts";
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: process.env.ENV === 'production' ? process.env.PRODUCTION_URL : process.env.BASE_URL,
   withCredentials: true
 })
 
