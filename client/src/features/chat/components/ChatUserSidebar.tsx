@@ -21,7 +21,7 @@ export default function ChatUsersSidebar(
     userId = "",
   }: {
     handleSelectUser: (user: IUser) => void,
-    selectedChatUser: IUser,
+    selectedChatUser: IUser | null,
     userId?: string,
   }) {
 

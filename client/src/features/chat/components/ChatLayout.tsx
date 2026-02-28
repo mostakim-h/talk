@@ -471,9 +471,9 @@ const ChatLayout = ({selectedChatUser, currentRoomId, userId, messages, setMessa
         senderId: data.senderId,
         content: {
           message: "",
-          media: [""], // Empty placeholder for media
+          media: [],
         },
-        type: data.type,
+        type: (data.type as 'text' | 'image' | 'video' | 'file' | 'voice') || 'text',
         deletionStatus: "none",
         status: "sent",
         reactions: {},

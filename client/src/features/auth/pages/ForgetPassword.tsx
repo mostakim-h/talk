@@ -77,7 +77,7 @@ export default function ForgetPassword() {
           <CardContent className="space-y-4">
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{(error as AxiosError)?.response?.data?.message || error.message}</AlertDescription>
+                <AlertDescription>{(error as any)?.response?.data?.message || (error as any)?.message || 'An error occurred'}</AlertDescription>
               </Alert>
             )}
 

@@ -29,11 +29,7 @@ export default function EditProfile() {
   const handleUpdate = async (field: string, value: string) => {
     if (!user) return;
     try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      if (user[field] === value) return
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
+      if (user[field as keyof typeof user] === value) return
       await update({ userId: user._id, bodyData: { [field]: value } });
       setEditMode('');
     } catch (error) {
@@ -43,15 +39,11 @@ export default function EditProfile() {
 
   const handleSendVerificationEmail = async () => {
     if (!user) return;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     await sendEmailToVerifyUserEmail(user.email);
   }
 
   const handleResetPassword = async () => {
     if (!user) return;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     await sendEmailToResetPassword(user.email);
   }
 

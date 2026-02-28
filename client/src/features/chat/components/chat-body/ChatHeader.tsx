@@ -296,11 +296,11 @@ const CallInterface = (
     selectedChatUser
   } : {
     callState: string,
-    callType: string,
+    callType: string | null,
     isAudioMuted: boolean,
     isVideoMuted: boolean,
-    localVideoRef: React.RefObject<HTMLVideoElement>,
-    remoteVideoRef: React.RefObject<HTMLVideoElement>,
+    localVideoRef: React.RefObject<HTMLVideoElement | null>,
+    remoteVideoRef: React.RefObject<HTMLVideoElement | null>,
     onEndCall: () => void,
     onToggleAudio: () => void,
     onToggleVideo: () => void,
